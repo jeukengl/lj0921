@@ -178,12 +178,12 @@ public class RentalAgreement {
         System.out.println("Rental Days: " + getRentalDays());
         System.out.println("Checkout Date: " + getCheckoutDate());
         System.out.println("Due Date: " + getDueDate());
-        System.out.println("Daily Rental Charge: " + getRentalCharge());
+        System.out.println("Daily Rental Charge: " + "$" + getRentalCharge());
         System.out.println("Charge days: " + getChargeDays());
-        System.out.println("Pre-discount charge: " + getPreDiscountCharge());
-        System.out.println("Discount percent: " + getDiscountPercent());
-        System.out.println("Discount amount: " + getDiscountAmount());
-        System.out.println("Final Charge: " + getFinalCharge());
+        System.out.println("Pre-discount charge: " + "$" + getPreDiscountCharge());
+        System.out.println("Discount percent: " + getDiscountPercent() + "%");
+        System.out.println("Discount amount: " + "$" + getDiscountAmount());
+        System.out.println("Final Charge: " + "$" + getFinalCharge());
 
     }
 
