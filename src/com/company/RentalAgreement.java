@@ -1,7 +1,9 @@
 package com.company;
 
-import java.lang.reflect.Array;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 
 public class RentalAgreement {
@@ -9,6 +11,15 @@ public class RentalAgreement {
     String date;
     int rentalDays;
     int discount;
+
+    String toolType;
+    String toolBrand;
+    String dueDate;
+    double rentalCharge;
+    int chargeDays;
+    double preDiscountCharge;
+    double discountAmount;
+    double finalCharge;
 
     // Initializing new lists for tool info
     private HashMap<String, ArrayList<String>> ToolInfo = new HashMap<String, ArrayList<String>>();
@@ -23,6 +34,7 @@ public class RentalAgreement {
     private ArrayList<String> ChainsawList = new ArrayList<String>();
     private ArrayList<String> JackHammerList = new ArrayList<String>();
 
+    SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yy");
 
     public RentalAgreement(String toolCode, String date, int rentalDays, int discount){
         this.toolCode = toolCode;
@@ -30,7 +42,7 @@ public class RentalAgreement {
         this.rentalDays = rentalDays;
         this.discount = discount;
 
-        // Setting lists
+        // Setting tool info lists and hashmap
         LADWList.add(0,"Werner");
         LADWList.add(1,"Ladder");
         CHNSList.add(0,"Stihl");
@@ -44,59 +56,135 @@ public class RentalAgreement {
         ToolInfo.put("CHNS", CHNSList);
         ToolInfo.put("JAKR", JAKRList);
         ToolInfo.put("JAKD", JAKDList);
+
+        // Setting charge info lists and hashmap
+        // 0 - Daily charge
+        // 1 - Weekday charge
+        // 2 - Weekend charge
+        // 3 - Holiday charge
+        LadderList.add(0, "1.99");
+        LadderList.add(1, "Yes");
+        LadderList.add(2, "Yes");
+        LadderList.add(3, "No");
+
+        ChainsawList.add(0, "1.49");
+        ChainsawList.add(1, "Yes");
+        ChainsawList.add(2, "No");
+        ChainsawList.add(3, "Yes");
+
+        JackHammerList.add(0, "2.99");
+        JackHammerList.add(1, "Yes");
+        JackHammerList.add(2, "No");
+        JackHammerList.add(3, "No");
+
+        ChargeInfo.put("Ladder", LadderList);
+        ChargeInfo.put("Chainsaw", ChainsawList);
+        ChargeInfo.put("Jackhammer", JackHammerList);
+
     }
 
-    public String getToolType(String toolCode){
+    public String getToolType(){
         // Reads in the toolCode and toolType
-        return "Happy";
+        this.toolType = ToolInfo.get(this.toolCode.toUpperCase()).get(1);
+        return this.toolType;
     }
 
-    public String getToolBrand(String toolCode){
+    public String getToolBrand(){
         // Reads in the toolCode and toolCode
-        return "Happy";
+        this.toolBrand = ToolInfo.get(this.toolCode.toUpperCase()).get(0);
+        return toolBrand;
     }
 
     public int getRentalDays(){
         // Specified at checkout
-        return this.rentalDays;
+        return rentalDays;
     }
 
     public String getCheckoutDate(){
         // Specified at checkout
-        return this.date;
+        return date;
     }
 
-    public String getDueDate(String toolCode){
+    public String getDueDate() throws ParseException {
         // Calculates due date from checkout date and rental days
-        return "Happy";
+
+        Calendar c = Calendar.getInstance();
+        c.setTime(sdf.parse(this.date));
+        c.add(Calendar.DATE, this.rentalDays);
+        this.dueDate = sdf.format(c.getTime());
+
+        return dueDate;
     }
 
-    public String getRentalCharge(String toolCode){
+    public double getRentalCharge(){
         // Amount per day, specified by the tool type
-        return "Happy";
+
+        this.rentalCharge = Double.parseDouble(ChargeInfo.get(this.getToolType()).get(0));
+        return rentalCharge;
     }
 
-    public String getChargeDays(String toolCode){
+    public int getChargeDays() throws ParseException {
         // Count of chargeable days from day after checkout through and including due date excluding no charge days
-        return "Happy";
+        int totalChargeDays = this.rentalDays;
+        for(int i =1; i<=this.rentalDays; i++){
+            Calendar c = Calendar.getInstance();
+            c.setTime(sdf.parse(this.date));
+            c.add(Calendar.DATE, i);
+
+            if((c.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY || c.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY)
+                    && !this.toolType.equals("Ladder")){
+                totalChargeDays = totalChargeDays-1;
+            }
+            if (c.get(Calendar.MONTH)== Calendar.JULY && c.get(Calendar.DAY_OF_MONTH) == 4
+                    && !this.toolType.equals("Chainsaw")){
+                totalChargeDays = totalChargeDays-1;
+            }
+            if(c.get(Calendar.MONTH) == Calendar.SEPTEMBER && c.get(Calendar.DAY_OF_WEEK) == Calendar.MONDAY &&
+                            c.get(Calendar.DAY_OF_WEEK_IN_MONTH) == 1 && !this.toolType.equals("Chainsaw")){
+                totalChargeDays = totalChargeDays-1;
+            }
+
+        }
+        this.chargeDays = totalChargeDays;
+
+        return chargeDays;
     }
 
-    public String getPreDiscountCharge(String toolCode){
+    public double getPreDiscountCharge() throws ParseException {
         // Calculated as charge days X daily charge. Resulting total rounded half up to cents.
-        return "Happy";
+        this.preDiscountCharge = Math.round((getChargeDays() * getRentalCharge()*100.0))/100.0;
+
+        return preDiscountCharge;
     }
 
     public int getDiscountPercent(){
         // Specified at checkout
-        return this.discount;
+        return discount;
     }
-    public String getDiscountAmount(String toolCode){
-        // Calculated from discount % and pre-discount charge. Resulting amount rounded half up to cents
-        return "Happy";
+    public double getDiscountAmount() throws ParseException {
+        // Calculated from discount % and pre-discount charge.
+        this.discountAmount = Math.round((this.discount/100.0 * this.getPreDiscountCharge()*100.0))/100.0;
+        return discountAmount;
     }
-    public String getFinalCharge(String toolCode){
+    public double getFinalCharge() throws ParseException {
         // Calculated as pre-discount charge- discount amount
-        return "Happy";
+        this.finalCharge = Math.round((this.getPreDiscountCharge() - this.getDiscountAmount())*100.0)/100.0;
+        return finalCharge;
+    }
+
+    public void printAll() throws ParseException {
+        System.out.println("Tool Type: " + getToolType());
+        System.out.println("Tool Brand: " + getToolBrand());
+        System.out.println("Rental Days: " + getRentalDays());
+        System.out.println("Checkout Date: " + getCheckoutDate());
+        System.out.println("Due Date: " + getDueDate());
+        System.out.println("Daily Rental Charge: " + getRentalCharge());
+        System.out.println("Charge days: " + getChargeDays());
+        System.out.println("Pre-discount charge: " + getPreDiscountCharge());
+        System.out.println("Discount percent: " + getDiscountPercent());
+        System.out.println("Discount amount: " + getDiscountAmount());
+        System.out.println("Final Charge: " + getFinalCharge());
+
     }
 
 
